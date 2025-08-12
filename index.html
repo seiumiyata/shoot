@@ -3,283 +3,1332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ドラゴンバトル 3D - 設定対応版</title>
-    <link rel="stylesheet" href="style.css">
+    <title>ワイヤーフレーム3Dドラゴンバトル</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0F0;
+        }
+        canvas {
+            display: block;
+            border: 2px solid #0F0;
+        }
+        #game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none; /* Allows clicks to pass through to canvas */
+            padding: 20px;
+            box-sizing: border-box;
+            color: #0F0;
+        }
+        #top-left-info, #bottom-left-info, #bottom-right-info, #config-screen, #key-binding-screen, #start-screen {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0F0;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            pointer-events: auto; /* Re-enable pointer events for these elements */
+            color: #0F0;
+        }
+        #top-left-info {
+            align-self: flex-start;
+            margin-top: 0;
+        }
+        #bottom-left-info {
+            align-self: flex-start;
+            margin-bottom: 0;
+        }
+        #bottom-right-info {
+            align-self: flex-end;
+            margin-bottom: 0;
+        }
+        #config-screen, #key-binding-screen, #start-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 600px;
+            min-height: 400px;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        #config-screen h2, #key-binding-screen h2, #start-screen h2 {
+            margin-top: 0;
+            color: #0F0;
+        }
+        #config-tabs {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid #0F0;
+            color: #0F0;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background-color 0.3s, color 0.3s;
+            pointer-events: auto;
+        }
+        .tab-button.active {
+            background-color: #0F0;
+            color: #000;
+        }
+        .tab-button:hover {
+            background-color: #050;
+        }
+        .tab-content {
+            display: none;
+            width: 90%;
+            padding: 10px 0;
+            text-align: left;
+            pointer-events: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .setting-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+        .setting-item label {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .setting-item input[type="range"] {
+            flex: 2;
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #050;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            pointer-events: auto;
+        }
+        .setting-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #0F0;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .setting-item select {
+            background-color: #000;
+            color: #0F0;
+            border: 1px solid #0F0;
+            padding: 5px;
+            pointer-events: auto;
+        }
+        .setting-item button {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid #0F0;
+            color: #0F0;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+            pointer-events: auto;
+        }
+        .setting-item button:hover {
+            background-color: #050;
+        }
+        #config-buttons, #key-binding-buttons, #start-screen-buttons {
+            margin-top: 20px;
+            pointer-events: auto;
+        }
+        #config-buttons button, #key-binding-buttons button, #start-screen-buttons button {
+            background-color: #0F0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 1em;
+            pointer-events: auto;
+        }
+        #config-buttons button:hover, #key-binding-buttons button:hover, #start-screen-buttons button:hover {
+            background-color: #050;
+            color: #FFF;
+        }
+        .key-input-box {
+            background-color: #000;
+            border: 1px solid #0F0;
+            color: #0F0;
+            padding: 5px;
+            min-width: 50px;
+            text-align: center;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .key-input-box.listening {
+            background-color: #050;
+        }
+        #key-binding-screen ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+        #key-binding-screen li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #key-binding-screen li div {
+            display: flex;
+            align-items: center;
+        }
+        #key-binding-screen li button {
+            margin-left: 10px;
+        }
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 2px solid #F00;
+            color: #F00;
+            padding: 20px;
+            font-size: 1.5em;
+            text-align: center;
+            display: none;
+            z-index: 200;
+        }
+        #start-screen-text {
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div class="game-container">
-        <div class="game-header">
-            <div class="hp-bars">
-                <div class="hp-bar">
-                    <label>プレイヤー HP</label>
-                    <div class="hp-bar-container">
-                        <div class="hp-bar-fill" id="playerHp"></div>
-                        <span class="hp-text" id="playerHpText">100/100</span>
-                    </div>
-                </div>
-                <div class="score">
-                    <label>スコア: <span id="score">0</span></label>
-                    <div class="altitude-display" id="altitudeContainer">
-                        <small>高度: <span id="altitude">0</span>m</small>
-                    </div>
-                </div>
-                <div class="hp-bar">
-                    <label>ドラゴン HP</label>
-                    <div class="hp-bar-container">
-                        <div class="hp-bar-fill dragon-hp" id="dragonHp"></div>
-                        <span class="hp-text" id="dragonHpText">200/200</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-        <div class="game-canvas-container">
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
-            
-            <div class="game-overlay hidden" id="gameOverlay">
-                <div class="overlay-content">
-                    <h2 id="gameOverTitle">ゲームオーバー</h2>
-                    <p id="gameOverMessage">ドラゴンに敗北しました...</p>
-                    <button class="btn btn--primary" onclick="resetGame()">再挑戦 (R)</button>
-                </div>
-            </div>
+    <div id="game-overlay">
+        <div id="top-left-info">
+            <div>HP: <span id="playerHP">100</span></div>
+            <div>Dragon HP: <span id="dragonHP">100</span></div>
         </div>
-
-        <div class="game-controls" id="gameControls">
-            <div class="controls-header">
-                <h3>操作方法</h3>
-                <button class="btn btn--secondary" onclick="openConfig()">設定 (C)</button>
-            </div>
-            <div class="controls-grid">
-                <div class="control-group">
-                    <h4>移動操作</h4>
-                    <div class="control-item">
-                        <span class="key" id="keyUp">W</span>
-                        <span>上昇</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key" id="keyDown">S</span>
-                        <span>下降</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key" id="keyLeft">A</span>
-                        <span>左移動</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key" id="keyRight">D</span>
-                        <span>右移動</span>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h4>前後移動</h4>
-                    <div class="control-item new-feature">
-                        <span class="key" id="keyForward">Q</span>
-                        <span>前進</span>
-                    </div>
-                    <div class="control-item new-feature">
-                        <span class="key" id="keyBackward">E</span>
-                        <span>後退</span>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h4>戦闘操作</h4>
-                    <div class="control-item">
-                        <span class="key" id="keyShoot">SPACE</span>
-                        <span>レーザー発射</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key" id="keyReset">R</span>
-                        <span>リセット</span>
-                    </div>
-                    <div class="control-item">
-                        <span class="key" id="keyConfig">C</span>
-                        <span>設定画面</span>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <h4>3D空間戦闘</h4>
-                    <p>完全6自由度の3D移動で立体的な戦闘を楽しもう。高度差とポジショニングが勝利の鍵！</p>
-                </div>
-            </div>
+        <div id="bottom-left-info">
+            <div>Altitude: <span id="altitude">0</span></div>
+            <div>Score: <span id="score">0</span></div>
+        </div>
+        <div id="bottom-right-info">
+            <div>Controls:</div>
+            <div>WASD: Move (Up/Down/Left/Right)</div>
+            <div>Q/E: Move (Forward/Backward)</div>
+            <div>Space: Attack</div>
+            <div>C: Config</div>
+            <div>R: Reset</div>
         </div>
     </div>
 
-    <!-- 設定画面モーダル -->
-    <div class="config-modal hidden" id="configModal">
-        <div class="config-backdrop" onclick="closeConfig()"></div>
-        <div class="config-container">
-            <div class="config-header">
-                <h2>ゲーム設定</h2>
-                <button class="btn-close" onclick="closeConfig()">×</button>
-            </div>
-            
-            <div class="config-tabs">
-                <button class="config-tab active" data-tab="controls">操作設定</button>
-                <button class="config-tab" data-tab="gameplay">ゲーム設定</button>
-                <button class="config-tab" data-tab="display">表示設定</button>
-                <button class="config-tab" data-tab="audio">音響設定</button>
-            </div>
-
-            <div class="config-content">
-                <!-- 操作設定タブ -->
-                <div class="config-panel active" id="controlsPanel">
-                    <h3>キーコンフィグ</h3>
-                    <div class="key-config-grid">
-                        <div class="key-config-item">
-                            <label>上昇</label>
-                            <button class="key-input" data-action="up" id="keyInputUp">W</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>下降</label>
-                            <button class="key-input" data-action="down" id="keyInputDown">S</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>左移動</label>
-                            <button class="key-input" data-action="left" id="keyInputLeft">A</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>右移動</label>
-                            <button class="key-input" data-action="right" id="keyInputRight">D</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>前進</label>
-                            <button class="key-input" data-action="forward" id="keyInputForward">Q</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>後退</label>
-                            <button class="key-input" data-action="backward" id="keyInputBackward">E</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>攻撃</label>
-                            <button class="key-input" data-action="shoot" id="keyInputShoot">SPACE</button>
-                        </div>
-                        <div class="key-config-item">
-                            <label>リセット</label>
-                            <button class="key-input" data-action="reset" id="keyInputReset">R</button>
-                        </div>
-                    </div>
-                    <div class="config-preset">
-                        <label>プリセット:</label>
-                        <select id="keyPreset">
-                            <option value="wasd">WASD標準</option>
-                            <option value="esdf">ESDF</option>
-                            <option value="arrows">矢印キー</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- ゲーム設定タブ -->
-                <div class="config-panel" id="gameplayPanel">
-                    <div class="setting-group">
-                        <label>難易度</label>
-                        <select id="difficultySelect">
-                            <option value="easy">Easy (プレイヤー150HP / ドラゴン150HP)</option>
-                            <option value="normal" selected>Normal (プレイヤー100HP / ドラゴン200HP)</option>
-                            <option value="hard">Hard (プレイヤー75HP / ドラゴン250HP)</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label>移動速度: <span id="speedValue">2.0</span>x</label>
-                        <input type="range" id="speedSlider" min="1.0" max="2.0" step="0.1" value="2.0">
-                    </div>
-                    <div class="setting-group">
-                        <label>ドラゴンAI強度</label>
-                        <select id="dragonAISelect">
-                            <option value="weak">弱い</option>
-                            <option value="normal" selected>普通</option>
-                            <option value="strong">強い</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 表示設定タブ -->
-                <div class="config-panel" id="displayPanel">
-                    <div class="setting-group">
-                        <label>プレイヤー色</label>
-                        <div class="color-buttons">
-                            <button class="color-btn" data-color="green" data-target="player" style="background-color: #00ff00"></button>
-                            <button class="color-btn" data-color="blue" data-target="player" style="background-color: #0088ff"></button>
-                            <button class="color-btn" data-color="white" data-target="player" style="background-color: #ffffff"></button>
-                            <button class="color-btn" data-color="yellow" data-target="player" style="background-color: #ffff00"></button>
-                        </div>
-                    </div>
-                    <div class="setting-group">
-                        <label>ドラゴン色</label>
-                        <div class="color-buttons">
-                            <button class="color-btn active" data-color="red" data-target="dragon" style="background-color: #ff4444"></button>
-                            <button class="color-btn" data-color="orange" data-target="dragon" style="background-color: #ff8800"></button>
-                            <button class="color-btn" data-color="purple" data-target="dragon" style="background-color: #8844ff"></button>
-                            <button class="color-btn" data-color="pink" data-target="dragon" style="background-color: #ff44aa"></button>
-                        </div>
-                    </div>
-                    <div class="setting-group">
-                        <label>背景色</label>
-                        <div class="color-buttons">
-                            <button class="color-btn active" data-color="black" data-target="background" style="background-color: #000022"></button>
-                            <button class="color-btn" data-color="darkblue" data-target="background" style="background-color: #001122"></button>
-                            <button class="color-btn" data-color="darkgreen" data-target="background" style="background-color: #002211"></button>
-                        </div>
-                    </div>
-                    <div class="setting-group">
-                        <h4>UI表示設定</h4>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showHPCheckbox" checked>
-                                HP表示
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showAltitudeCheckbox" checked>
-                                高度表示
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showScoreCheckbox" checked>
-                                スコア表示
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showControlsCheckbox" checked>
-                                操作ガイド表示
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 音響設定タブ -->
-                <div class="config-panel" id="audioPanel">
-                    <div class="setting-group">
-                        <label>音量: <span id="volumeValue">50</span>%</label>
-                        <input type="range" id="volumeSlider" min="0" max="100" step="5" value="50">
-                    </div>
-                    <div class="setting-group">
-                        <h4>効果音設定</h4>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="attackSoundCheckbox" checked>
-                                攻撃音
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="damageSoundCheckbox" checked>
-                                ダメージ音
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="moveSoundCheckbox">
-                                移動音
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="config-buttons">
-                <button class="btn btn--primary" onclick="saveConfig()">設定保存</button>
-                <button class="btn btn--secondary" onclick="resetToDefaults()">デフォルトに戻す</button>
-                <button class="btn btn--outline" onclick="closeConfig()">閉じる</button>
-            </div>
+    <div id="start-screen">
+        <h2>ワイヤーフレーム3Dドラゴンバトル</h2>
+        <div id="start-screen-text">
+            <p>ようこそ！<br>
+            このゲームは、ワイヤーフレームグラフィックスで描かれた3D空間でドラゴンと戦うシューティングゲームです。</p>
+            <p>WASDキーで上下左右に移動し、Q/Eキーで前後移動します。<br>
+            スペースキーで攻撃、Cキーでコンフィグ画面を開きます。</p>
+            <p>レトロな3Dバトルをお楽しみください！</p>
+        </div>
+        <div id="start-screen-buttons">
+            <button id="startButton">ゲームスタート</button>
+            <button id="startConfigButton">コンフィグ</button>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <div id="config-screen">
+        <h2>設定</h2>
+        <div id="config-tabs">
+            <button class="tab-button active" data-tab="controls">操作設定</button>
+            <button class="tab-button" data-tab="game">ゲーム設定</button>
+            <button class="tab-button" data-tab="display">表示設定</button>
+            <button class="tab-button" data-tab="audio">音響設定</button>
+        </div>
+
+        <div id="controls-tab" class="tab-content active">
+            <p>WASDキーで上下左右、Q/Eキーで前後移動に設定済みです。</p>
+            <div class="setting-item">
+                <button id="keybindButton">キーバインド設定</button>
+            </div>
+            <p>※詳細なキーバインドは「キーバインド設定」から変更できます。</p>
+            <div class="setting-item">
+                <label for="control-preset">プリセット:</label>
+                <select id="control-preset">
+                    <option value="default">デフォルト (WASD:上下左右, QE:前後)</option>
+                    <option value="old">旧設定 (WASD:前後左右, QE:上下)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="game-tab" class="tab-content">
+            <div class="setting-item">
+                <label for="difficulty">難易度:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="normal">Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="player-speed">移動速度:</label>
+                <input type="range" id="player-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                <span id="player-speed-value">1.0x</span>
+            </div>
+            <div class="setting-item">
+                <label for="dragon-ai-strength">ドラゴンAI強度:</label>
+                <select id="dragon-ai-strength">
+                    <option value="weak">弱い</option>
+                    <option value="normal">普通</option>
+                    <option value="strong">強い</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="display-tab" class="tab-content">
+            <div class="setting-item">
+                <label for="player-color">プレイヤー色:</label>
+                <input type="color" id="player-color" value="#00FF00">
+            </div>
+            <div class="setting-item">
+                <label for="dragon-color">ドラゴン色:</label>
+                <input type="color" id="dragon-color" value="#FF0000">
+            </div>
+            <div class="setting-item">
+                <label for="background-color">背景色:</label>
+                <input type="color" id="background-color" value="#000000">
+            </div>
+            <div class="setting-item">
+                <label for="show-hp">HP表示:</label>
+                <input type="checkbox" id="show-hp" checked>
+            </div>
+            <div class="setting-item">
+                <label for="show-altitude">高度表示:</label>
+                <input type="checkbox" id="show-altitude" checked>
+            </div>
+            <div class="setting-item">
+                <label for="show-score">スコア表示:</label>
+                <input type="checkbox" id="show-score" checked>
+            </div>
+            <div class="setting-item">
+                <label for="show-controls">操作ガイド表示:</label>
+                <input type="checkbox" id="show-controls" checked>
+            </div>
+        </div>
+
+        <div id="audio-tab" class="tab-content">
+            <div class="setting-item">
+                <label for="sfx-toggle">効果音ON/OFF:</label>
+                <input type="checkbox" id="sfx-toggle" checked>
+            </div>
+            <div class="setting-item">
+                <label for="sfx-volume">効果音量:</label>
+                <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.5">
+                <span id="sfx-volume-value">0.5</span>
+            </div>
+        </div>
+
+        <div id="config-buttons">
+            <button id="saveConfig">保存して閉じる</button>
+            <button id="resetConfig">デフォルトに戻す</button>
+        </div>
+    </div>
+
+    <div id="key-binding-screen">
+        <h2>キーバインド設定</h2>
+        <ul>
+            <li>
+                <label>前進 (Q):</label>
+                <div><div class="key-input-box" data-action="moveForward">Q</div><button data-action="moveForward" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>後退 (E):</label>
+                <div><div class="key-input-box" data-action="moveBackward">E</div><button data-action="moveBackward" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>上昇 (W):</label>
+                <div><div class="key-input-box" data-action="moveUp">W</div><button data-action="moveUp" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>下降 (S):</label>
+                <div><div class="key-input-box" data-action="moveDown">S</div><button data-action="moveDown" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>左移動 (A):</label>
+                <div><div class="key-input-box" data-action="moveLeft">A</div><button data-action="moveLeft" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>右移動 (D):</label>
+                <div><div class="key-input-box" data-action="moveRight">D</div><button data-action="moveRight" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>攻撃 (Space):</label>
+                <div><div class="key-input-box" data-action="attack">Space</div><button data-action="attack" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>コンフィグ (C):</label>
+                <div><div class="key-input-box" data-action="config">C</div><button data-action="config" class="set-key-button">設定</button></div>
+            </li>
+            <li>
+                <label>リセット (R):</label>
+                <div><div class="key-input-box" data-action="reset">R</div><button data-action="reset" class="set-key-button">設定</button></div>
+            </li>
+        </ul>
+        <div id="key-binding-buttons">
+            <button id="saveKeybindings">保存して戻る</button>
+            <button id="resetKeybindings">デフォルトに戻す</button>
+        </div>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const playerHPDisplay = document.getElementById('playerHP');
+        const dragonHPDisplay = document.getElementById('dragonHP');
+        const altitudeDisplay = document.getElementById('altitude');
+        const scoreDisplay = document.getElementById('score');
+        const controlsDisplay = document.getElementById('bottom-right-info');
+
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('startButton');
+        const startConfigButton = document.getElementById('startConfigButton');
+
+        const configScreen = document.getElementById('config-screen');
+        const configTabs = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const saveConfigButton = document.getElementById('saveConfig');
+        const resetConfigButton = document.getElementById('resetConfig');
+        const keybindButton = document.getElementById('keybindButton');
+
+        const keyBindingScreen = document.getElementById('key-binding-screen');
+        const keyInputBoxes = document.querySelectorAll('.key-input-box');
+        const setKeyButtons = document.querySelectorAll('.set-key-button');
+        const saveKeybindingsButton = document.getElementById('saveKeybindings');
+        const resetKeybindingsButton = document.getElementById('resetKeybindings');
+        const messageDisplay = document.getElementById('message');
+
+        // Game State
+        let gameRunning = false;
+        let lastTime = 0;
+        let deltaTime = 0;
+        let score = 0;
+        let gameDifficulty = 'normal'; // easy, normal, hard
+        let playerMoveSpeed = 1.0;
+        let playerColor = '#00FF00';
+        let dragonColor = '#FF0000';
+        let backgroundColor = '#000000';
+        let sfxEnabled = true;
+        let sfxVolume = 0.5;
+
+        // Display settings
+        let showHP = true;
+        let showAltitude = true;
+        let showScore = true;
+        let showControls = true;
+
+        // Player controls
+        const defaultKeybindings = {
+            moveForward: 'Q',
+            moveBackward: 'E',
+            moveUp: 'W',
+            moveDown: 'S',
+            moveLeft: 'A',
+            moveRight: 'D',
+            attack: ' ', // Space key
+            config: 'C',
+            reset: 'R'
+        };
+        let keybindings = { ...defaultKeybindings };
+        let keyPressed = {};
+        let listeningForKey = null; // Stores the action for which we are listening for a key press
+
+        // Game Objects
+        let player;
+        let dragon;
+        let bullets = [];
+        let dragonBullets = [];
+
+        // Camera
+        const camera = {
+            x: 0, y: 0, z: -100, // Fixed camera position relative to player
+            distance: 500 // Projection distance
+        };
+
+        // --- Math and 3D Utilities ---
+        class Vector3 {
+            constructor(x = 0, y = 0, z = 0) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            add(v) { return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z); }
+            sub(v) { return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z); }
+            mul(s) { return new Vector3(this.x * s, this.y * s, this.z * s); }
+            div(s) { return new Vector3(this.x / s, this.y / s, this.z / s); }
+            normalize() {
+                const mag = this.magnitude();
+                return mag > 0 ? this.div(mag) : new Vector3();
+            }
+            magnitude() { return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z); }
+            distanceTo(v) { return this.sub(v).magnitude(); }
+        }
+
+        // Project 3D point to 2D screen coordinates
+        function project(point3D, cameraPos, cameraDistance, canvasWidth, canvasHeight) {
+            const relativeX = point3D.x - cameraPos.x;
+            const relativeY = point3D.y - cameraPos.y;
+            const relativeZ = point3D.z - cameraPos.z;
+
+            if (relativeZ >= cameraDistance) { // Avoid division by zero or negative scale for points behind camera
+                return null;
+            }
+
+            const scale = cameraDistance / (cameraDistance - relativeZ);
+            const screenX = relativeX * scale + canvasWidth / 2;
+            const screenY = -relativeY * scale + canvasHeight / 2; // Y-axis in 3D usually points up, canvas Y points down
+            const depth = scale; // Use scale as a rough depth for sorting if needed
+            return { x: screenX, y: screenY, depth: depth };
+        }
+
+        // --- Game Object Classes ---
+        class GameObject {
+            constructor(x, y, z, color, hp) {
+                this.position = new Vector3(x, y, z);
+                this.velocity = new Vector3(0, 0, 0);
+                this.model = { vertices: [], edges: [] };
+                this.color = color;
+                this.hp = hp;
+                this.maxHp = hp;
+                this.radius = 10; // For collision detection (simplified)
+                this.isActive = true;
+            }
+
+            update(dt) {
+                this.position = this.position.add(this.velocity.mul(dt));
+            }
+
+            draw(ctx, cameraPos, cameraDistance, canvasWidth, canvasHeight) {
+                if (!this.isActive) return;
+
+                const projectedVertices = [];
+                for (const vertex of this.model.vertices) {
+                    const absVertex = this.position.add(vertex); // Convert to world coordinates
+                    const projected = project(absVertex, cameraPos, cameraDistance, canvasWidth, canvasHeight);
+                    if (projected) {
+                        projectedVertices.push(projected);
+                    } else {
+                        projectedVertices.push(null); // Mark as not drawable
+                    }
+                }
+
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 1;
+
+                for (const edge of this.model.edges) {
+                    const v1 = projectedVertices[edge[0]];
+                    const v2 = projectedVertices[edge[1]];
+
+                    if (v1 && v2) {
+                        ctx.beginPath();
+                        ctx.moveTo(v1.x, v1.y);
+                        ctx.lineTo(v2.x, v2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+                if (this.hp <= 0) {
+                    this.hp = 0;
+                    this.isActive = false;
+                    return true; // Died
+                }
+                return false; // Still alive
+            }
+        }
+
+        class Player extends GameObject {
+            constructor(x, y, z) {
+                super(x, y, z, playerColor, 100);
+                this.model.vertices = [
+                    new Vector3(0, 5, 0),    // Top (0)
+                    new Vector3(-5, -5, 5),  // Front-Left (1)
+                    new Vector3(5, -5, 5),   // Front-Right (2)
+                    new Vector3(0, -5, -5)   // Back (3)
+                ];
+                this.model.edges = [
+                    [0, 1], [0, 2], [0, 3], // Top to base
+                    [1, 2], [2, 3], [3, 1]  // Base triangle
+                ];
+                this.speed = 0.5 * playerMoveSpeed; // Base speed
+                this.shootCooldown = 0;
+                this.maxShootCooldown = 0.2; // seconds
+                this.bulletSpeed = 100;
+                this.altitudeLimit = 150; // Max altitude from 0
+                this.boundary = 200; // X and Z boundary from 0
+            }
+
+            update(dt) {
+                super.update(dt);
+                this.shootCooldown = Math.max(0, this.shootCooldown - dt);
+
+                // Apply boundaries
+                this.position.x = Math.max(-this.boundary, Math.min(this.boundary, this.position.x));
+                this.position.y = Math.max(-this.altitudeLimit, Math.min(this.altitudeLimit, this.position.y));
+                this.position.z = Math.max(-this.boundary, Math.min(this.boundary, this.position.z));
+            }
+
+            shoot() {
+                if (this.shootCooldown <= 0) {
+                    const bullet = new Bullet(this.position.x, this.position.y, this.position.z, this.bulletSpeed, new Vector3(0, 0, 1), 'player');
+                    bullets.push(bullet);
+                    this.shootCooldown = this.maxShootCooldown;
+                    if (sfxEnabled) playSound(0.05, 440, 0.05); // Simple shoot sound
+                }
+            }
+
+            setSpeed(newSpeed) {
+                this.speed = 0.5 * newSpeed;
+            }
+
+            reset() {
+                this.position = new Vector3(0, 0, 0);
+                this.velocity = new Vector3(0, 0, 0);
+                this.hp = this.maxHp;
+                this.isActive = true;
+                this.shootCooldown = 0;
+            }
+        }
+
+        class Dragon extends GameObject {
+            constructor(x, y, z) {
+                super(x, y, z, dragonColor, 200);
+                this.model.vertices = [
+                    new Vector3(0, 0, 10),   // Nose (0)
+                    new Vector3(0, 5, 5),    // Head Top (1)
+                    new Vector3(0, -5, 5),   // Head Bottom (2)
+                    new Vector3(0, 0, -10),  // Tail (3)
+                    new Vector3(-10, 0, 0),  // Left Wing Tip (4)
+                    new Vector3(10, 0, 0),   // Right Wing Tip (5)
+                    new Vector3(0, 0, 0),    // Body Center (6)
+                    new Vector3(-5, 0, 5),   // Left Shoulder (7)
+                    new Vector3(5, 0, 5),    // Right Shoulder (8)
+                    new Vector3(-5, 0, -5),  // Left Hip (9)
+                    new Vector3(5, 0, -5)    // Right Hip (10)
+                ];
+                this.model.edges = [
+                    [0, 1], [0, 2], [1, 2], // Head
+                    [1, 6], [2, 6], [3, 6], // Body
+                    [4, 7], [5, 8], [7, 6], [8, 6], // Wings to body
+                    [9, 6], [10, 6], // Hips to body
+                    [7, 9], [8, 10], // Wing/Hip connections
+                    [0,7], [0,8] // Nose to shoulders
+                ];
+                this.target = new Vector3(0, 0, 0); // Player's position
+                this.speed = 20; // Base movement speed
+                this.shootCooldown = 0;
+                this.maxShootCooldown = 3; // seconds
+                this.bulletSpeed = 80;
+                this.aiState = 'pursue'; // pursue, attack, evade
+                this.evadeTimer = 0;
+                this.evadeDuration = 1; // seconds
+            }
+
+            setTarget(playerPos) {
+                this.target = playerPos;
+            }
+
+            update(dt) {
+                super.update(dt);
+
+                this.shootCooldown = Math.max(0, this.shootCooldown - dt);
+
+                const distToPlayer = this.position.distanceTo(this.target);
+
+                // AI Logic based on difficulty
+                switch (gameDifficulty) {
+                    case 'easy':
+                        this.speed = 15;
+                        this.maxShootCooldown = 4;
+                        break;
+                    case 'normal':
+                        this.speed = 20;
+                        this.maxShootCooldown = 3;
+                        break;
+                    case 'hard':
+                        this.speed = 25;
+                        this.maxShootCooldown = 2;
+                        break;
+                }
+
+                if (this.aiState === 'pursue') {
+                    // Simple pursuit
+                    let direction = this.target.sub(this.position).normalize();
+                    this.velocity = direction.mul(this.speed);
+
+                    if (distToPlayer < 100 && Math.random() < 0.01) { // Chance to evade near player
+                        this.aiState = 'evade';
+                        this.evadeTimer = this.evadeDuration;
+                    } else if (distToPlayer < 200 && this.shootCooldown <= 0) {
+                        this.shoot();
+                    }
+                } else if (this.aiState === 'evade') {
+                    // Move away from player
+                    let evadeDirection = this.position.sub(this.target).normalize();
+                    // Add some random vertical/horizontal movement for complexity
+                    evadeDirection = evadeDirection.add(new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().mul(0.5)).normalize();
+                    this.velocity = evadeDirection.mul(this.speed * 1.5); // Evade faster
+
+                    this.evadeTimer -= dt;
+                    if (this.evadeTimer <= 0) {
+                        this.aiState = 'pursue'; // Return to pursuit
+                    }
+                }
+                 // Boundary check for dragon
+                const boundary = 300;
+                if (Math.abs(this.position.x) > boundary || Math.abs(this.position.y) > boundary || Math.abs(this.position.z) > boundary) {
+                    this.velocity = new Vector3(0,0,0).sub(this.position).normalize().mul(this.speed); // Move back towards center
+                }
+            }
+
+            shoot() {
+                if (this.shootCooldown <= 0) {
+                    // Shoot towards player's current position
+                    const direction = this.target.sub(this.position).normalize();
+                    const bullet = new Bullet(this.position.x, this.position.y, this.position.z, this.bulletSpeed, direction, 'dragon');
+                    dragonBullets.push(bullet);
+                    this.shootCooldown = this.maxShootCooldown;
+                    if (sfxEnabled) playSound(0.08, 100, 0.08); // Deeper sound for dragon
+                }
+            }
+
+            reset() {
+                this.position = new Vector3(0, 50, 200); // Start high and far
+                this.velocity = new Vector3(0, 0, 0);
+                this.hp = this.maxHp;
+                this.isActive = true;
+                this.shootCooldown = 0;
+                this.aiState = 'pursue';
+            }
+        }
+
+        class Bullet extends GameObject {
+            constructor(x, y, z, speed, direction, type) {
+                super(x, y, z, type === 'player' ? playerColor : dragonColor, 1); // Bullets have 1 HP, effectively
+                this.model.vertices = [new Vector3(0, 0, 0), new Vector3(0, 0, 2)]; // Simple line
+                this.model.edges = [[0, 1]];
+                this.velocity = direction.mul(speed);
+                this.type = type; // 'player' or 'dragon'
+                this.radius = 2; // Smaller for bullets
+                this.damage = type === 'player' ? 10 : 5; // Player bullets deal more damage
+                this.lifetime = 3; // seconds, to prevent bullets flying forever
+                this.timeAlive = 0;
+            }
+
+            update(dt) {
+                super.update(dt);
+                this.timeAlive += dt;
+                if (this.timeAlive > this.lifetime) {
+                    this.isActive = false;
+                }
+            }
+        }
+
+        // --- Collision Detection ---
+        function checkCollision(obj1, obj2) {
+            if (!obj1.isActive || !obj2.isActive) return false;
+            const distance = obj1.position.distanceTo(obj2.position);
+            return distance < (obj1.radius + obj2.radius);
+        }
+
+        // --- Game Initialization ---
+        function initGame() {
+            player = new Player(0, 0, 0);
+            dragon = new Dragon(0, 50, 200);
+            bullets = [];
+            dragonBullets = [];
+            score = 0;
+            updateUI();
+            if (sfxEnabled) playSound(0.1, 880, 0.1); // Game start sound
+        }
+
+        // --- Game Loop ---
+        function gameLoop(currentTime) {
+            if (!gameRunning) {
+                lastTime = currentTime; // Reset lastTime when game is paused/stopped
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+            lastTime = currentTime;
+
+            updateGame(deltaTime);
+            drawGame();
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Update Game State ---
+        function updateGame(dt) {
+            // Player movement
+            player.velocity = new Vector3(0, 0, 0);
+            const playerSpeed = player.speed;
+
+            if (keyPressed[keybindings.moveForward]) player.velocity.z += playerSpeed;
+            if (keyPressed[keybindings.moveBackward]) player.velocity.z -= playerSpeed;
+            if (keyPressed[keybindings.moveUp]) player.velocity.y += playerSpeed;
+            if (keyPressed[keybindings.moveDown]) player.velocity.y -= playerSpeed;
+            if (keyPressed[keybindings.moveLeft]) player.velocity.x -= playerSpeed;
+            if (keyPressed[keybindings.moveRight]) player.velocity.x += playerSpeed;
+
+            if (keyPressed[keybindings.attack]) player.shoot();
+
+            player.update(dt);
+            dragon.setTarget(player.position);
+            dragon.update(dt);
+
+            // Update and filter bullets
+            bullets.forEach(bullet => bullet.update(dt));
+            bullets = bullets.filter(bullet => bullet.isActive);
+
+            dragonBullets.forEach(bullet => bullet.update(dt));
+            dragonBullets = dragonBullets.filter(bullet => bullet.isActive);
+
+            // Collision detection
+            // Player bullets vs Dragon
+            bullets.forEach(bullet => {
+                if (checkCollision(bullet, dragon)) {
+                    if (dragon.takeDamage(bullet.damage)) {
+                        // Dragon defeated
+                        score += 1000;
+                        showMessage('ドラゴンを倒した！', '#0F0');
+                        gameRunning = false;
+                        setTimeout(() => {
+                            hideMessage();
+                            initGame(); // Restart game
+                            startScreen.style.display = 'flex'; // Show start screen again
+                        }, 3000);
+                    }
+                    bullet.isActive = false; // Bullet is consumed
+                    if (sfxEnabled) playSound(0.05, 600, 0.05); // Hit sound
+                }
+            });
+
+            // Dragon bullets vs Player
+            dragonBullets.forEach(bullet => {
+                if (checkCollision(bullet, player)) {
+                    if (player.takeDamage(bullet.damage)) {
+                        // Player defeated
+                        showMessage('ゲームオーバー', '#F00');
+                        gameRunning = false;
+                        setTimeout(() => {
+                            hideMessage();
+                            initGame(); // Restart game
+                            startScreen.style.display = 'flex'; // Show start screen again
+                        }, 3000);
+                    }
+                    bullet.isActive = false; // Bullet is consumed
+                    if (sfxEnabled) playSound(0.05, 150, 0.05); // Player hit sound
+                }
+            });
+
+            // Player vs Dragon (if they touch)
+            if (checkCollision(player, dragon)) {
+                if (player.takeDamage(dragon.maxHp)) { // Instant death for player
+                    showMessage('ゲームオーバー', '#F00');
+                    gameRunning = false;
+                    setTimeout(() => {
+                        hideMessage();
+                        initGame();
+                        startScreen.style.display = 'flex';
+                    }, 3000);
+                }
+                dragon.takeDamage(player.maxHp); // Dragon also takes heavy damage
+                if (sfxEnabled) playSound(0.1, 100, 0.1); // Collision sound
+            }
+        }
+
+        // --- Draw Game Objects ---
+        function drawGame() {
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Dynamic camera position (follows player, but offset)
+            const currentCamera = {
+                x: player.position.x + camera.x,
+                y: player.position.y + camera.y,
+                z: player.position.z + camera.z,
+                distance: camera.distance
+            };
+
+            // Draw player, dragon, bullets
+            player.draw(ctx, currentCamera, camera.distance, canvas.width, canvas.height);
+            dragon.draw(ctx, currentCamera, camera.distance, canvas.width, canvas.height);
+            bullets.forEach(bullet => bullet.draw(ctx, currentCamera, camera.distance, canvas.width, canvas.height));
+            dragonBullets.forEach(bullet => bullet.draw(ctx, currentCamera, camera.distance, canvas.width, canvas.height));
+
+            // Draw boundaries (simple cube for visualization)
+            drawCubeBoundary(ctx, currentCamera, camera.distance, canvas.width, canvas.height, player.altitudeLimit, player.boundary);
+        }
+
+        function drawCubeBoundary(ctx, cameraPos, cameraDistance, canvasWidth, canvasHeight, altLimit, boundary) {
+            const cubeVertices = [
+                new Vector3(-boundary, altLimit, boundary),
+                new Vector3(boundary, altLimit, boundary),
+                new Vector3(boundary, -altLimit, boundary),
+                new Vector3(-boundary, -altLimit, boundary),
+                new Vector3(-boundary, altLimit, -boundary),
+                new Vector3(boundary, altLimit, -boundary),
+                new Vector3(boundary, -altLimit, -boundary),
+                new Vector3(-boundary, -altLimit, -boundary)
+            ];
+            const cubeEdges = [
+                [0, 1], [1, 2], [2, 3], [3, 0], // Front face
+                [4, 5], [5, 6], [6, 7], [7, 4], // Back face
+                [0, 4], [1, 5], [2, 6], [3, 7]  // Connecting edges
+            ];
+
+            const projectedVertices = [];
+            for (const vertex of cubeVertices) {
+                const projected = project(vertex, cameraPos, cameraDistance, canvasWidth, canvasHeight);
+                if (projected) {
+                    projectedVertices.push(projected);
+                } else {
+                    projectedVertices.push(null);
+                }
+            }
+
+            ctx.strokeStyle = '#050'; // Dim green for boundary
+            ctx.lineWidth = 0.5;
+
+            for (const edge of cubeEdges) {
+                const v1 = projectedVertices[edge[0]];
+                const v2 = projectedVertices[edge[1]];
+
+                if (v1 && v2) {
+                    ctx.beginPath();
+                    ctx.moveTo(v1.x, v1.y);
+                    ctx.lineTo(v2.x, v2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+
+        // --- UI Updates ---
+        function updateUI() {
+            playerHPDisplay.textContent = player.hp;
+            dragonHPDisplay.textContent = dragon.hp;
+            altitudeDisplay.textContent = player.position.y.toFixed(0); // Player's altitude
+            scoreDisplay.textContent = score;
+
+            playerHPDisplay.parentElement.style.display = showHP ? 'block' : 'none';
+            dragonHPDisplay.parentElement.style.display = showHP ? 'block' : 'none';
+            altitudeDisplay.parentElement.style.display = showAltitude ? 'block' : 'none';
+            scoreDisplay.parentElement.style.display = showScore ? 'block' : 'none';
+            controlsDisplay.style.display = showControls ? 'block' : 'none';
+        }
+
+        function showMessage(msg, color) {
+            messageDisplay.textContent = msg;
+            messageDisplay.style.color = color;
+            messageDisplay.style.borderColor = color;
+            messageDisplay.style.display = 'block';
+        }
+
+        function hideMessage() {
+            messageDisplay.style.display = 'none';
+        }
+
+        // --- Audio Functions ---
+        function playSound(volume, frequency, duration) {
+            if (!sfxEnabled) return;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = 'sine'; // Sine wave for a clean sound
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime); // Hz
+            gainNode.gain.setValueAtTime(volume * sfxVolume, audioContext.currentTime);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // --- Event Listeners (Input) ---
+        document.addEventListener('keydown', (event) => {
+            if (listeningForKey) {
+                // If listening for a keybind, capture it
+                event.preventDefault();
+                setKeybinding(listeningForKey, event.key.toUpperCase());
+                listeningForKey = null;
+                return;
+            }
+
+            const key = event.key.toUpperCase();
+            keyPressed[key] = true;
+
+            if (key === keybindings.config) {
+                toggleConfigScreen();
+            } else if (key === keybindings.reset) {
+                initGame();
+                gameRunning = true; // Resume game on reset
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toUpperCase();
+            keyPressed[key] = false;
+        });
+
+        // --- Config Screen Logic ---
+        function toggleConfigScreen() {
+            if (configScreen.style.display === 'flex' || keyBindingScreen.style.display === 'flex') {
+                configScreen.style.display = 'none';
+                keyBindingScreen.style.display = 'none';
+                gameRunning = true; // Resume game
+            } else {
+                configScreen.style.display = 'flex';
+                gameRunning = false; // Pause game
+                loadConfig(); // Load current settings into the UI
+            }
+        }
+
+        configTabs.forEach(button => {
+            button.addEventListener('click', () => {
+                configTabs.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        saveConfigButton.addEventListener('click', () => {
+            saveConfig();
+            toggleConfigScreen();
+        });
+
+        resetConfigButton.addEventListener('click', () => {
+            if (confirm('すべての設定をデフォルトに戻しますか？')) {
+                resetConfigToDefault();
+                loadConfig(); // Reload UI with default values
+            }
+        });
+
+        keybindButton.addEventListener('click', () => {
+            configScreen.style.display = 'none';
+            keyBindingScreen.style.display = 'flex';
+            updateKeybindingDisplay();
+        });
+
+        saveKeybindingsButton.addEventListener('click', () => {
+            saveKeybindings();
+            keyBindingScreen.style.display = 'none';
+            configScreen.style.display = 'flex'; // Go back to config
+        });
+
+        resetKeybindingsButton.addEventListener('click', () => {
+            if (confirm('キーバインドをデフォルトに戻しますか？')) {
+                keybindings = { ...defaultKeybindings };
+                updateKeybindingDisplay();
+                saveKeybindings();
+            }
+        });
+
+        keyInputBoxes.forEach(box => {
+            box.addEventListener('click', (event) => {
+                keyInputBoxes.forEach(b => b.classList.remove('listening'));
+                box.classList.add('listening');
+                listeningForKey = box.dataset.action;
+                box.textContent = '押して...';
+            });
+        });
+
+        // Alternative way to set keys via buttons (more explicit)
+        setKeyButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const action = button.dataset.action;
+                const box = document.querySelector(`.key-input-box[data-action="${action}"]`);
+                keyInputBoxes.forEach(b => b.classList.remove('listening'));
+                box.classList.add('listening');
+                listeningForKey = action;
+                box.textContent = '押して...';
+            });
+        });
+
+        function setKeybinding(action, key) {
+            // Check for duplicate keybinds
+            for (const existingAction in keybindings) {
+                if (keybindings[existingAction] === key && existingAction !== action) {
+                    showMessage(`"${key}"は既に"${getKeyActionName(existingAction)}"に割り当てられています。`, '#FF0000');
+                    setTimeout(hideMessage, 2000);
+                    updateKeybindingDisplay(); // Restore original key text
+                    return;
+                }
+            }
+            keybindings[action] = key;
+            updateKeybindingDisplay();
+            showMessage(`"${getKeyActionName(action)}"が"${key}"に設定されました。`, '#0F0');
+            setTimeout(hideMessage, 1500);
+        }
+
+        function getKeyActionName(action) {
+            switch (action) {
+                case 'moveForward': return '前進';
+                case 'moveBackward': return '後退';
+                case 'moveUp': return '上昇';
+                case 'moveDown': return '下降';
+                case 'moveLeft': return '左移動';
+                case 'moveRight': return '右移動';
+                case 'attack': return '攻撃';
+                case 'config': return 'コンフィグ';
+                case 'reset': return 'リセット';
+                default: return action;
+            }
+        }
+
+
+        function updateKeybindingDisplay() {
+            keyInputBoxes.forEach(box => {
+                const action = box.dataset.action;
+                box.textContent = keybindings[action];
+                box.classList.remove('listening');
+            });
+            // Update controls display in game overlay
+            document.getElementById('bottom-right-info').innerHTML = `
+                <div>Controls:</div>
+                <div>${keybindings.moveUp}/${keybindings.moveDown}/${keybindings.moveLeft}/${keybindings.moveRight}: Move (Up/Down/Left/Right)</div>
+                <div>${keybindings.moveForward}/${keybindings.moveBackward}: Move (Forward/Backward)</div>
+                <div>${keybindings.attack}: Attack</div>
+                <div>${keybindings.config}: Config</div>
+                <div>${keybindings.reset}: Reset</div>
+            `;
+        }
+
+
+        // Control preset logic
+        document.getElementById('control-preset').addEventListener('change', (event) => {
+            const preset = event.target.value;
+            if (preset === 'default') {
+                keybindings = {
+                    moveForward: 'Q',
+                    moveBackward: 'E',
+                    moveUp: 'W',
+                    moveDown: 'S',
+                    moveLeft: 'A',
+                    moveRight: 'D',
+                    attack: ' ',
+                    config: 'C',
+                    reset: 'R'
+                };
+            } else if (preset === 'old') {
+                keybindings = {
+                    moveForward: 'W',
+                    moveBackward: 'S',
+                    moveUp: 'Q',
+                    moveDown: 'E',
+                    moveLeft: 'A',
+                    moveRight: 'D',
+                    attack: ' ',
+                    config: 'C',
+                    reset: 'R'
+                };
+            }
+            updateKeybindingDisplay(); // Update UI after applying preset
+            saveKeybindings(); // Save immediately
+        });
+
+        // Config UI element listeners
+        document.getElementById('difficulty').addEventListener('change', (event) => {
+            gameDifficulty = event.target.value;
+        });
+
+        document.getElementById('player-speed').addEventListener('input', (event) => {
+            playerMoveSpeed = parseFloat(event.target.value);
+            document.getElementById('player-speed-value').textContent = playerMoveSpeed.toFixed(1) + 'x';
+            if (player) player.setSpeed(playerMoveSpeed); // Update player speed immediately
+        });
+
+        document.getElementById('dragon-ai-strength').addEventListener('change', (event) => {
+            // This is linked to gameDifficulty
+        });
+
+        document.getElementById('player-color').addEventListener('input', (event) => {
+            playerColor = event.target.value;
+            if (player) player.color = playerColor;
+        });
+        document.getElementById('dragon-color').addEventListener('input', (event) => {
+            dragonColor = event.target.value;
+            if (dragon) dragon.color = dragonColor;
+        });
+        document.getElementById('background-color').addEventListener('input', (event) => {
+            backgroundColor = event.target.value;
+        });
+
+        document.getElementById('show-hp').addEventListener('change', (event) => { showHP = event.target.checked; });
+        document.getElementById('show-altitude').addEventListener('change', (event) => { showAltitude = event.target.checked; });
+        document.getElementById('show-score').addEventListener('change', (event) => { showScore = event.target.checked; });
+        document.getElementById('show-controls').addEventListener('change', (event) => { showControls = event.target.checked; });
+
+        document.getElementById('sfx-toggle').addEventListener('change', (event) => { sfxEnabled = event.target.checked; });
+        document.getElementById('sfx-volume').addEventListener('input', (event) => {
+            sfxVolume = parseFloat(event.target.value);
+            document.getElementById('sfx-volume-value').textContent = sfxVolume.toFixed(1);
+        });
+
+        // --- Local Storage for Settings ---
+        function saveConfig() {
+            const settings = {
+                keybindings: keybindings,
+                gameDifficulty: gameDifficulty,
+                playerMoveSpeed: playerMoveSpeed,
+                playerColor: playerColor,
+                dragonColor: dragonColor,
+                backgroundColor: backgroundColor,
+                showHP: showHP,
+                showAltitude: showAltitude,
+                showScore: showScore,
+                showControls: showControls,
+                sfxEnabled: sfxEnabled,
+                sfxVolume: sfxVolume
+            };
+            localStorage.setItem('wireframeGameSettings', JSON.stringify(settings));
+        }
+
+        function loadConfig() {
+            const savedSettings = localStorage.getItem('wireframeGameSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+
+                keybindings = settings.keybindings || defaultKeybindings;
+                gameDifficulty = settings.gameDifficulty || 'normal';
+                playerMoveSpeed = settings.playerMoveSpeed !== undefined ? settings.playerMoveSpeed : 1.0;
+                playerColor = settings.playerColor || '#00FF00';
+                dragonColor = settings.dragonColor || '#FF0000';
+                backgroundColor = settings.backgroundColor || '#000000';
+                showHP = settings.showHP !== undefined ? settings.showHP : true;
+                showAltitude = settings.showAltitude !== undefined ? settings.showAltitude : true;
+                showScore = settings.showScore !== undefined ? settings.showScore : true;
+                showControls = settings.showControls !== undefined ? settings.showControls : true;
+                sfxEnabled = settings.sfxEnabled !== undefined ? settings.sfxEnabled : true;
+                sfxVolume = settings.sfxVolume !== undefined ? settings.sfxVolume : 0.5;
+            } else {
+                resetConfigToDefault(); // If no settings saved, set to default
+            }
+            applyConfigToUI();
+            applyConfigToGame();
+        }
+
+        function resetConfigToDefault() {
+            keybindings = { ...defaultKeybindings };
+            gameDifficulty = 'normal';
+            playerMoveSpeed = 1.0;
+            playerColor = '#00FF00';
+            dragonColor = '#FF0000';
+            backgroundColor = '#000000';
+            showHP = true;
+            showAltitude = true;
+            showScore = true;
+            showControls = true;
+            sfxEnabled = true;
+            sfxVolume = 0.5;
+            saveConfig(); // Save default settings
+        }
+
+        function applyConfigToUI() {
+            document.getElementById('difficulty').value = gameDifficulty;
+            document.getElementById('player-speed').value = playerMoveSpeed;
+            document.getElementById('player-speed-value').textContent = playerMoveSpeed.toFixed(1) + 'x';
+            document.getElementById('dragon-ai-strength').value = gameDifficulty; // AI strength follows difficulty
+
+            document.getElementById('player-color').value = playerColor;
+            document.getElementById('dragon-color').value = dragonColor;
+            document.getElementById('background-color').value = backgroundColor;
+
+            document.getElementById('show-hp').checked = showHP;
+            document.getElementById('show-altitude').checked = showAltitude;
+            document.getElementById('show-score').checked = showScore;
+            document.getElementById('show-controls').checked = showControls;
+
+            document.getElementById('sfx-toggle').checked = sfxEnabled;
+            document.getElementById('sfx-volume').value = sfxVolume;
+            document.getElementById('sfx-volume-value').textContent = sfxVolume.toFixed(1);
+
+            updateKeybindingDisplay();
+        }
+
+        function applyConfigToGame() {
+            if (player) player.setSpeed(playerMoveSpeed);
+            if (player) player.color = playerColor;
+            if (dragon) dragon.color = dragonColor;
+            // Background color is used directly in drawGame
+            updateUI(); // Update UI visibility based on settings
+        }
+
+        function saveKeybindings() {
+            const settings = JSON.parse(localStorage.getItem('wireframeGameSettings')) || {};
+            settings.keybindings = keybindings;
+            localStorage.setItem('wireframeGameSettings', JSON.stringify(settings));
+        }
+
+        // --- Start Screen Logic ---
+        startButton.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            gameRunning = true;
+            lastTime = performance.now(); // Initialize lastTime for game loop
+            requestAnimationFrame(gameLoop); // Start the game loop
+        });
+
+        startConfigButton.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            toggleConfigScreen();
+        });
+
+
+        // Initial setup
+        loadConfig();
+        initGame();
+        startScreen.style.display = 'flex'; // Show start screen on load
+
+    </script>
 </body>
 </html>
