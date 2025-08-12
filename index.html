@@ -781,21 +781,17 @@
             dragonBullets = [];
             score = 0;
             updateUI();
-            if (sfxEnabled) playSound(0.1, 880, 0.1); // Game start sound
         }
 
         // --- Game Loop ---
         function gameLoop(currentTime) {
-            if (!gameRunning) {
-                lastTime = currentTime; // Reset lastTime when game is paused/stopped
-                requestAnimationFrame(gameLoop);
-                return;
-            }
-
             deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
             lastTime = currentTime;
+            
+            if (gameRunning) {
+                updateGame(deltaTime);
+            }
 
-            updateGame(deltaTime);
             drawGame();
             updateUI();
 
@@ -1003,19 +999,20 @@
                 return;
             }
 
-            const key = event.key.toUpperCase();
+            // Convert space key to " " for consistency
+            const key = event.key === ' ' ? ' ' : event.key.toUpperCase();
             keyPressed[key] = true;
 
-            if (key === keybindings.config) {
+            if (key === keybindings.config.toUpperCase()) {
                 toggleConfigScreen();
-            } else if (key === keybindings.reset) {
+            } else if (key === keybindings.reset.toUpperCase()) {
                 initGame();
                 gameRunning = true; // Resume game on reset
             }
         });
 
         document.addEventListener('keyup', (event) => {
-            const key = event.key.toUpperCase();
+            const key = event.key === ' ' ? ' ' : event.key.toUpperCase();
             keyPressed[key] = false;
         });
 
@@ -1098,16 +1095,16 @@
         function setKeybinding(action, key) {
             // Check for duplicate keybinds
             for (const existingAction in keybindings) {
-                if (keybindings[existingAction] === key && existingAction !== action) {
+                if (keybindings[existingAction].toUpperCase() === key && existingAction !== action) {
                     showMessage(`"${key}"は既に"${getKeyActionName(existingAction)}"に割り当てられています。`, '#FF0000');
                     setTimeout(hideMessage, 2000);
                     updateKeybindingDisplay(); // Restore original key text
                     return;
                 }
             }
-            keybindings[action] = key;
+            keybindings[action] = key === ' ' ? 'Space' : key;
             updateKeybindingDisplay();
-            showMessage(`"${getKeyActionName(action)}"が"${key}"に設定されました。`, '#0F0');
+            showMessage(`"${getKeyActionName(action)}"が"${key === ' ' ? 'Space' : key}"に設定されました。`, '#0F0');
             setTimeout(hideMessage, 1500);
         }
 
@@ -1130,15 +1127,18 @@
         function updateKeybindingDisplay() {
             keyInputBoxes.forEach(box => {
                 const action = box.dataset.action;
-                box.textContent = keybindings[action];
+                let keyText = keybindings[action];
+                if (keyText === ' ') keyText = 'Space';
+                box.textContent = keyText;
                 box.classList.remove('listening');
             });
             // Update controls display in game overlay
+            let attackKeyText = keybindings.attack === ' ' ? 'Space' : keybindings.attack;
             document.getElementById('bottom-right-info').innerHTML = `
                 <div>Controls:</div>
                 <div>${keybindings.moveUp}/${keybindings.moveDown}/${keybindings.moveLeft}/${keybindings.moveRight}: Move (Up/Down/Left/Right)</div>
                 <div>${keybindings.moveForward}/${keybindings.moveBackward}: Move (Forward/Backward)</div>
-                <div>${keybindings.attack}: Attack</div>
+                <div>${attackKeyText}: Attack</div>
                 <div>${keybindings.config}: Config</div>
                 <div>${keybindings.reset}: Reset</div>
             `;
@@ -1149,17 +1149,7 @@
         document.getElementById('control-preset').addEventListener('change', (event) => {
             const preset = event.target.value;
             if (preset === 'default') {
-                keybindings = {
-                    moveForward: 'Q',
-                    moveBackward: 'E',
-                    moveUp: 'W',
-                    moveDown: 'S',
-                    moveLeft: 'A',
-                    moveRight: 'D',
-                    attack: ' ',
-                    config: 'C',
-                    reset: 'R'
-                };
+                keybindings = { ...defaultKeybindings };
             } else if (preset === 'old') {
                 keybindings = {
                     moveForward: 'W',
@@ -1239,7 +1229,7 @@
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
 
-                keybindings = settings.keybindings || defaultKeybindings;
+                keybindings = settings.keybindings || { ...defaultKeybindings };
                 gameDifficulty = settings.gameDifficulty || 'normal';
                 playerMoveSpeed = settings.playerMoveSpeed !== undefined ? settings.playerMoveSpeed : 1.0;
                 playerColor = settings.playerColor || '#00FF00';
@@ -1310,12 +1300,12 @@
             localStorage.setItem('wireframeGameSettings', JSON.stringify(settings));
         }
 
-        // --- Start Screen Logic ---
+        // --- Start Screen Logic (FIXED) ---
         startButton.addEventListener('click', () => {
             startScreen.style.display = 'none';
-            gameRunning = true;
-            lastTime = performance.now(); // Initialize lastTime for game loop
-            requestAnimationFrame(gameLoop); // Start the game loop
+            gameRunning = true; // This will un-pause the game loop
+            lastTime = performance.now(); // Set the start time for the first delta calculation
+            if (sfxEnabled) playSound(0.1, 880, 0.1);
         });
 
         startConfigButton.addEventListener('click', () => {
@@ -1324,10 +1314,18 @@
         });
 
 
-        // Initial setup
+        // --- Game Initialization and Start (FIXED) ---
+        // Load settings and prepare the game objects
         loadConfig();
         initGame();
-        startScreen.style.display = 'flex'; // Show start screen on load
+
+        // Show the start screen
+        startScreen.style.display = 'flex';
+
+        // Start the main game loop. It will run continuously.
+        // It will be "paused" (only drawing, not updating) until gameRunning is set to true.
+        lastTime = performance.now();
+        requestAnimationFrame(gameLoop);
 
     </script>
 </body>
