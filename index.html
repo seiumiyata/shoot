@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドラゴンバトル 3D - 設定対応版</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="hp-bars">
+                <div class="hp-bar">
+                    <label>プレイヤー HP</label>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill" id="playerHp"></div>
+                        <span class="hp-text" id="playerHpText">100/100</span>
+                    </div>
+                </div>
+                <div class="score">
+                    <label>スコア: <span id="score">0</span></label>
+                    <div class="altitude-display" id="altitudeContainer">
+                        <small>高度: <span id="altitude">0</span>m</small>
+                    </div>
+                </div>
+                <div class="hp-bar">
+                    <label>ドラゴン HP</label>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill dragon-hp" id="dragonHp"></div>
+                        <span class="hp-text" id="dragonHpText">200/200</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div class="game-overlay hidden" id="gameOverlay">
+                <div class="overlay-content">
+                    <h2 id="gameOverTitle">ゲームオーバー</h2>
+                    <p id="gameOverMessage">ドラゴンに敗北しました...</p>
+                    <button class="btn btn--primary" onclick="resetGame()">再挑戦 (R)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-controls" id="gameControls">
+            <div class="controls-header">
+                <h3>操作方法</h3>
+                <button class="btn btn--secondary" onclick="openConfig()">設定 (C)</button>
+            </div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h4>移動操作</h4>
+                    <div class="control-item">
+                        <span class="key" id="keyUp">W</span>
+                        <span>上昇</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key" id="keyDown">S</span>
+                        <span>下降</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key" id="keyLeft">A</span>
+                        <span>左移動</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key" id="keyRight">D</span>
+                        <span>右移動</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h4>前後移動</h4>
+                    <div class="control-item new-feature">
+                        <span class="key" id="keyForward">Q</span>
+                        <span>前進</span>
+                    </div>
+                    <div class="control-item new-feature">
+                        <span class="key" id="keyBackward">E</span>
+                        <span>後退</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h4>戦闘操作</h4>
+                    <div class="control-item">
+                        <span class="key" id="keyShoot">SPACE</span>
+                        <span>レーザー発射</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key" id="keyReset">R</span>
+                        <span>リセット</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key" id="keyConfig">C</span>
+                        <span>設定画面</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h4>3D空間戦闘</h4>
+                    <p>完全6自由度の3D移動で立体的な戦闘を楽しもう。高度差とポジショニングが勝利の鍵！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定画面モーダル -->
+    <div class="config-modal hidden" id="configModal">
+        <div class="config-backdrop" onclick="closeConfig()"></div>
+        <div class="config-container">
+            <div class="config-header">
+                <h2>ゲーム設定</h2>
+                <button class="btn-close" onclick="closeConfig()">×</button>
+            </div>
+            
+            <div class="config-tabs">
+                <button class="config-tab active" data-tab="controls">操作設定</button>
+                <button class="config-tab" data-tab="gameplay">ゲーム設定</button>
+                <button class="config-tab" data-tab="display">表示設定</button>
+                <button class="config-tab" data-tab="audio">音響設定</button>
+            </div>
+
+            <div class="config-content">
+                <!-- 操作設定タブ -->
+                <div class="config-panel active" id="controlsPanel">
+                    <h3>キーコンフィグ</h3>
+                    <div class="key-config-grid">
+                        <div class="key-config-item">
+                            <label>上昇</label>
+                            <button class="key-input" data-action="up" id="keyInputUp">W</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>下降</label>
+                            <button class="key-input" data-action="down" id="keyInputDown">S</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>左移動</label>
+                            <button class="key-input" data-action="left" id="keyInputLeft">A</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>右移動</label>
+                            <button class="key-input" data-action="right" id="keyInputRight">D</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>前進</label>
+                            <button class="key-input" data-action="forward" id="keyInputForward">Q</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>後退</label>
+                            <button class="key-input" data-action="backward" id="keyInputBackward">E</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>攻撃</label>
+                            <button class="key-input" data-action="shoot" id="keyInputShoot">SPACE</button>
+                        </div>
+                        <div class="key-config-item">
+                            <label>リセット</label>
+                            <button class="key-input" data-action="reset" id="keyInputReset">R</button>
+                        </div>
+                    </div>
+                    <div class="config-preset">
+                        <label>プリセット:</label>
+                        <select id="keyPreset">
+                            <option value="wasd">WASD標準</option>
+                            <option value="esdf">ESDF</option>
+                            <option value="arrows">矢印キー</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ゲーム設定タブ -->
+                <div class="config-panel" id="gameplayPanel">
+                    <div class="setting-group">
+                        <label>難易度</label>
+                        <select id="difficultySelect">
+                            <option value="easy">Easy (プレイヤー150HP / ドラゴン150HP)</option>
+                            <option value="normal" selected>Normal (プレイヤー100HP / ドラゴン200HP)</option>
+                            <option value="hard">Hard (プレイヤー75HP / ドラゴン250HP)</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>移動速度: <span id="speedValue">2.0</span>x</label>
+                        <input type="range" id="speedSlider" min="1.0" max="2.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="setting-group">
+                        <label>ドラゴンAI強度</label>
+                        <select id="dragonAISelect">
+                            <option value="weak">弱い</option>
+                            <option value="normal" selected>普通</option>
+                            <option value="strong">強い</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 表示設定タブ -->
+                <div class="config-panel" id="displayPanel">
+                    <div class="setting-group">
+                        <label>プレイヤー色</label>
+                        <div class="color-buttons">
+                            <button class="color-btn" data-color="green" data-target="player" style="background-color: #00ff00"></button>
+                            <button class="color-btn" data-color="blue" data-target="player" style="background-color: #0088ff"></button>
+                            <button class="color-btn" data-color="white" data-target="player" style="background-color: #ffffff"></button>
+                            <button class="color-btn" data-color="yellow" data-target="player" style="background-color: #ffff00"></button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>ドラゴン色</label>
+                        <div class="color-buttons">
+                            <button class="color-btn active" data-color="red" data-target="dragon" style="background-color: #ff4444"></button>
+                            <button class="color-btn" data-color="orange" data-target="dragon" style="background-color: #ff8800"></button>
+                            <button class="color-btn" data-color="purple" data-target="dragon" style="background-color: #8844ff"></button>
+                            <button class="color-btn" data-color="pink" data-target="dragon" style="background-color: #ff44aa"></button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label>背景色</label>
+                        <div class="color-buttons">
+                            <button class="color-btn active" data-color="black" data-target="background" style="background-color: #000022"></button>
+                            <button class="color-btn" data-color="darkblue" data-target="background" style="background-color: #001122"></button>
+                            <button class="color-btn" data-color="darkgreen" data-target="background" style="background-color: #002211"></button>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <h4>UI表示設定</h4>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showHPCheckbox" checked>
+                                HP表示
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showAltitudeCheckbox" checked>
+                                高度表示
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showScoreCheckbox" checked>
+                                スコア表示
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showControlsCheckbox" checked>
+                                操作ガイド表示
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 音響設定タブ -->
+                <div class="config-panel" id="audioPanel">
+                    <div class="setting-group">
+                        <label>音量: <span id="volumeValue">50</span>%</label>
+                        <input type="range" id="volumeSlider" min="0" max="100" step="5" value="50">
+                    </div>
+                    <div class="setting-group">
+                        <h4>効果音設定</h4>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="attackSoundCheckbox" checked>
+                                攻撃音
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="damageSoundCheckbox" checked>
+                                ダメージ音
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="moveSoundCheckbox">
+                                移動音
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-buttons">
+                <button class="btn btn--primary" onclick="saveConfig()">設定保存</button>
+                <button class="btn btn--secondary" onclick="resetToDefaults()">デフォルトに戻す</button>
+                <button class="btn btn--outline" onclick="closeConfig()">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
